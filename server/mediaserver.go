@@ -342,23 +342,6 @@ func gotRTMPStreamHandler(s *LivepeerServer) func(url *url.URL, rtmpStrm stream.
 			monitor.LogStreamCreatedEvent(mid.String(), nonce)
 		}
 
-		//Set up the transcode response callback
-		s.LivepeerNode.VideoNetwork.ReceivedTranscodeResponse(string(hlsStrmID), func(result map[string]string) {
-			//Parse through the results
-			for strmID, tProfile := range result {
-				vParams := ffmpeg.VideoProfileToVariantParams(ffmpeg.VideoProfileLookup[tProfile])
-				pl, _ := m3u8.NewMediaPlaylist(stream.DefaultHLSStreamWin, stream.DefaultHLSStreamCap)
-				variant := &m3u8.Variant{URI: fmt.Sprintf("%v.m3u8", strmID), Chunklist: pl, VariantParams: vParams}
-				manifest.Append(variant.URI, variant.Chunklist, variant.VariantParams)
-			}
-
-			//Update the master playlist on the network
-			if err = s.LivepeerNode.VideoNetwork.UpdateMasterPlaylist(string(mid), manifest); err != nil {
-				glog.Errorf("Error updating master playlist on network: %v", err)
-				return
-			}
-		})
-
 		glog.Infof("\n\nVideo Created With ManifestID: %v\n\n", mid)
 		glog.V(common.SHORT).Infof("\n\nhlsStrmID: %v\n\n", hlsStrmID)
 
